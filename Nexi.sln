@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29926.136
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nexi", "Nexi\Nexi.csproj", "{152C933F-EAB4-4433-8264-568210552459}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Nexi Tests", "Nexi Tests\Nexi Tests.csproj", "{FEAE9532-1197-439D-B96E-9537C63A9945}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{152C933F-EAB4-4433-8264-568210552459}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{152C933F-EAB4-4433-8264-568210552459}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{152C933F-EAB4-4433-8264-568210552459}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{152C933F-EAB4-4433-8264-568210552459}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FEAE9532-1197-439D-B96E-9537C63A9945}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FEAE9532-1197-439D-B96E-9537C63A9945}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FEAE9532-1197-439D-B96E-9537C63A9945}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FEAE9532-1197-439D-B96E-9537C63A9945}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {CEFEF9D9-8CFB-49E7-BE6D-EDDA6005BA3D}
+	EndGlobalSection
+EndGlobal
