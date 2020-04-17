@@ -38,7 +38,7 @@ namespace Nexi {
             return entities.IndexOf(entity) != -1;
         }
 
-        public void UpdateCheck() {
+        public void ClearChanged() {
             ChangedEntities.Clear();
         }
 

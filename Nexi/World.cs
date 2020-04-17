@@ -14,22 +14,15 @@ namespace Nexi {
         private Stack<uint> freeUids;
         private Entity[] entities;
         private IComponent[][] components;
-        private List<Group> groups;
-        
-        private List<ISystem> allSystems;
-        private List<IInitialiseSystem> initSystems;
-        private List<ITickSystem> tickSystems;
-        private List<IReactiveSystem> reactSystems;
+        private List<Feature> features;
 
-        private Dictionary<Group, IReactiveSystem> groupToSystem;
-
-        public void Initialise(uint maxEntities, Type[] componentTypes, ISystem[] systems) {
+        public World(uint maxEntities, Type[] componentTypes) {
             this.componentTypes = componentTypes;
             nextUid = 0;
             freeUids = new Stack<uint>();
             entities = new Entity[maxEntities];
             components = new IComponent[componentTypes.Length][];
-            groups = new List<Group>();
+            features = new List<Feature>();
             
             for(int i = 0; i < componentTypes.Length; i++) {
                 if(!typeof(IComponent).IsAssignableFrom(componentTypes[i])) {
@@ -38,78 +31,41 @@ namespace Nexi {
                 components[i] = new IComponent[maxEntities];
             }
 
-            allSystems = new List<ISystem>();
-            initSystems = new List<IInitialiseSystem>();
-            tickSystems = new List<ITickSystem>();
-            reactSystems = new List<IReactiveSystem>();
-            groupToSystem = new Dictionary<Group, IReactiveSystem>();
-            foreach(ISystem system in systems) {
-                allSystems.Add(system);
-                if(system is IInitialiseSystem) initSystems.Add(system as IInitialiseSystem);
-                if(system is ITickSystem) tickSystems.Add(system as ITickSystem);
-                if(system is IReactiveSystem) {
-                    reactSystems.Add(system as IReactiveSystem);
-                    // Create group
-                    Group g = new Group((system as IReactiveSystem).Filter);
-                    groups.Add(g);
-                    groupToSystem.Add(g, system as IReactiveSystem);
-                }
-            }
-
-            // Init
-            foreach(IInitialiseSystem system in initSystems) {
-                system.Initialise(this);
-            }
-
-            Log?.Invoke($"Registered {componentTypes.Length} components and {allSystems.Count} systems.");
+            Log?.Invoke($"Registered {componentTypes.Length} components.");
         }
 
         public void AddFeature(Feature feature) {
-            foreach(ISystem system in feature.allSystems) {
-                allSystems.Add(system);
-                if(system is IInitialiseSystem) initSystems.Add(system as IInitialiseSystem);
-                if(system is ITickSystem) tickSystems.Add(system as ITickSystem);
-                if(system is IReactiveSystem) {
-                    reactSystems.Add(system as IReactiveSystem);
-                    // Create group
-                    Group g = new Group((system as IReactiveSystem).Filter);
-                    groups.Add(g);
-                    groupToSystem.Add(g, system as IReactiveSystem);
-                }
+            features.Add(feature);
+        }
+
+        public void Init() {
+            int count = 0;
+            foreach(Feature feature in features) {
+                feature.Initialise(this);
+                count += feature.InitSystemsCount;
             }
+
+            Log?.Invoke($"Initialised {count} systems.");
         }
 
         public void Update() {
             // Tick
-            foreach(ITickSystem system in tickSystems) {
-                system.Tick(this);
+            foreach(Feature feature in features) {
+                feature.Tick(this);
             }
         }
 
         public void React() {
-            foreach(Group g in groups) {
-                if(g.HasReactions()) {
-                    if(groupToSystem.ContainsKey(g)) groupToSystem[g].React(this, g.ChangedEntities.ToArray());
-                }
-                g.UpdateCheck();
+            foreach(Feature feature in features) {
+                feature.React(this);
             }
         }
 
-        #region Debug
-        public void PrintEntities() {
-            string msg = "\nEntities:\n";
-            for(int i = 0; i < entities.Length; i++) {
-                if(entities[i] != null) {
-                    msg += entities[i].Uid + ": " + entities[i].ListComponents(componentTypes) + "\n";
-                }
+        public void Cleanup() {
+            foreach(Feature feature in features) {
+                feature.Cleanup();
             }
-            Log(msg);
         }
-
-        public void PrintGroupCounts() {
-            Log(string.Join("\n", groups.Select(x => x.ToString())));
-        }
-        #endregion
 
         #region Entities
         public Entity CreateEntity() {
@@ -124,21 +80,22 @@ namespace Nexi {
         #region Components
         public void AddComponent(uint entity, IComponent component) {
             if(entities[entity] == null) throw new Exception($"Can't add component to entity {entity}. Entity does not exist.");
+            Log($"Adding {component.GetType().Name} to entity {entity}");
             int cti = GetComponentTypeIndex(component);
-            //if(components[cti][entity] != null) throw new Exception($"Can't add {component.GetType().Name} to entity {entity}. Component already exists on entity.");
             components[cti][entity] = component;
 
             // Add to entity
             entities[entity].ComponentAdded(cti);
-            
+
             // Add to groups
-            foreach(Group group in groups) {
-                group.TestEntity(this, entity);
+            foreach(Feature feature in features) {
+                feature.ComponentAdded(this, entity);
             }
         }
 
         public void RemoveComponent(uint entity, int componentTypeIndex) {
             if(entities[entity] == null) throw new Exception($"Can't remove component from entity {entity}. Entity does not exist.");
+            Log($"Removing component index {componentTypeIndex} from entity {entity}");
             if(components[componentTypeIndex][entity] == null) throw new Exception($"Can't remove component {componentTypes[componentTypeIndex].Name} form entity {entity}. Component does not exist on entity.");
             components[componentTypeIndex][entity] = null;
 
@@ -146,8 +103,8 @@ namespace Nexi {
             entities[entity].ComponentRemoved(componentTypeIndex);
 
             // Remove from groups
-            foreach(Group group in groups) {
-                group.TestEntity(this, entity);
+            foreach(Feature feature in features) {
+                feature.ComponentRemoved(this, entity);
             }
         }
 
